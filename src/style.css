@@ -1,7 +1,7 @@
 /* MID-CENTURY MODERN DESIGN SYSTEM (Synced with ecommerce-angular theme) */
 :root {
     --color-bg: #FDFBF7;
-    --color-surface: #FAF7F0;
+    --color-surface: rgba(250, 247, 240, 0.94);
     --color-text: #3C2F2F;
     --color-muted: #6E5D4F;
     --color-border: #3C2F2F;
@@ -20,8 +20,8 @@
     --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Retro Hard Block Shadow & Sharp Edges */
-    --shadow-card: 4px 4px 0px #3C2F2F;
-    --shadow-card-hover: 6px 6px 0px #3C2F2F;
+    --shadow-card: 5px 5px 0px #3C2F2F;
+    --shadow-card-hover: 7px 7px 0px #3C2F2F;
     --shadow-btn: 3px 3px 0px #3C2F2F;
     --border-width: 2px;
 }
@@ -35,8 +35,13 @@
 body {
     font-family: var(--font-body);
     background-color: var(--color-bg);
-    background-image: radial-gradient(var(--color-muted) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-image:
+        linear-gradient(rgba(253, 251, 247, 0.78), rgba(253, 251, 247, 0.85)),
+        url('/bg-hero.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: var(--color-text);
     min-height: 100vh;
     line-height: 1.5;
@@ -62,6 +67,10 @@ body {
     border-bottom: var(--border-width) solid var(--color-border);
     flex-wrap: wrap;
     gap: 1.25rem;
+    background: rgba(250, 247, 240, 0.9);
+    padding: 1.25rem 1.5rem;
+    border: var(--border-width) solid var(--color-border);
+    box-shadow: var(--shadow-card);
 }
 
 .logo-area {
@@ -192,6 +201,8 @@ h1 {
 /* Card Component */
 .card {
     background: var(--color-surface);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: var(--border-width) solid var(--color-border);
     box-shadow: var(--shadow-card);
     padding: 1.75rem;
@@ -280,7 +291,7 @@ input[type="datetime-local"],
 select {
     width: 100%;
     padding: 0.75rem 0.9rem;
-    background: var(--color-bg);
+    background: rgba(253, 251, 247, 0.9);
     border: var(--border-width) solid var(--color-border);
     color: var(--color-text);
     font-family: var(--font-body);
@@ -322,7 +333,7 @@ select:focus {
     display: flex;
     gap: 0.5rem;
     padding: 0.6rem;
-    background: var(--color-bg);
+    background: rgba(253, 251, 247, 0.9);
     border: 1.5px solid var(--color-border);
     align-items: center;
     min-height: 46px;
@@ -372,6 +383,7 @@ select:focus {
 
 .stat-card {
     background: var(--color-surface);
+    backdrop-filter: blur(8px);
     border: var(--border-width) solid var(--color-border);
     box-shadow: var(--shadow-btn);
     padding: 1.1rem 0.9rem;
@@ -429,7 +441,7 @@ select:focus {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: var(--color-bg);
+    background: rgba(253, 251, 247, 0.92);
     border: 1.5px solid var(--color-border);
     transition: all 0.15s ease;
 }
@@ -538,7 +550,7 @@ select:focus {
     align-items: center;
     padding: 1.2rem 1.5rem;
     border-bottom: var(--border-width) solid var(--color-border);
-    background: var(--color-bg);
+    background: rgba(253, 251, 247, 0.95);
 }
 
 .modal-header h3 {
@@ -576,7 +588,7 @@ select:focus {
 
 .modal-footer {
     padding: 1rem 1.5rem;
-    background: var(--color-bg);
+    background: rgba(253, 251, 247, 0.95);
     border-top: var(--border-width) solid var(--color-border);
     display: flex;
     justify-content: flex-end;
