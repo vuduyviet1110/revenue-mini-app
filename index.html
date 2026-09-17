@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Revenue Mini App - Mid-Century Modern Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/src/style.css" />
+</head>
+
+<body class="style-mid-century">
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+                        <path d="M12 2v20" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display">Revenue Tracker <span class="badge">Mid-Century Edition</span></h1>
+                    <p class="subtitle">Nhập tổng hợp doanh thu & Tự động bắn dữ liệu về Google Sheets</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-config-script" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Cấu hình Web App URL
+                </button>
+                <button id="btn-view-code" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                        <polyline points="16 18 22 12 16 6" />
+                        <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                    Mã Google Script
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="dashboard-grid">
+
+            <!-- Left Column: Form nhập liệu -->
+            <section class="card form-card">
+                <div class="card-header">
+                    <h2 class="font-display"><span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới</h2>
+                    <span class="status-indicator" id="sync-status">
+                        <span class="status-dot online"></span> Sẵn sàng đồng bộ
+                    </span>
+                </div>
+
+                <form id="revenue-form">
+                    <div class="form-group">
+                        <label for="item-name">Tên đơn hàng / Sản phẩm</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="item-name" placeholder="Ví dụ: Áo Sơ Mi Nam Mid-Century Vintage #102"
+                                required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="amount">Số tiền bán được (VNĐ)</label>
+                            <div class="input-wrapper currency-input">
+                                <input type="number" id="amount" placeholder="0" min="1000" step="1000" required />
+                                <span class="currency-symbol">đ</span>
+                            </div>
+                            <div class="amount-preview" id="amount-preview">0 đ</div>
+                        </div>
+
+                        <div class="form-group flex-1">
+                            <label for="payment-method">Phương thức thanh toán</label>
+                            <select id="payment-method">
+                                <option value="Chuyển khoản Banking">Chuyển khoản Banking</option>
+                                <option value="Tiền mặt">Tiền mặt</option>
+                                <option value="Thẻ tín dụng / ATM">Thẻ tín dụng / ATM</option>
+                                <option value="Ví MoMo / ZaloPay">Ví MoMo / ZaloPay</option>
+                                <option value="COD Thu Hộ">COD Thu Hộ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="sale-date">Ngày bán hàng</label>
+                            <input type="datetime-local" id="sale-date" required />
+                        </div>
+
+                        <div class="form-group flex-1">
+                            <label>Thời gian phân loại</label>
+                            <div class="auto-calc-box">
+                                <span id="calc-month" class="tag terracotta-tag">Tháng --</span>
+                                <span id="calc-quarter" class="tag sage-tag">Quý --</span>
+                                <span id="calc-year" class="tag mustard-tag">Năm ----</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Ghi chú (Tùy chọn)</label>
+                        <input type="text" id="notes" placeholder="Mã khách hàng, mã vận đơn..." />
+                    </div>
+
+                    <button type="submit" id="btn-submit" class="btn btn-primary btn-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+                            <path d="m5 12 5 5L20 7" />
+                        </svg>
+                        Ghi Nhận & Bắn Về Google Sheet
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Column: Stats & Recent Syncs -->
+            <section class="right-column">
+
+                <!-- Stat Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title font-display">Doanh Thu Hôm Nay</div>
+                        <div class="stat-value text-terracotta" id="stat-today">0 đ</div>
+                        <div class="stat-sub" id="stat-today-count">0 giao dịch</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-title font-display">Doanh Thu Tháng Này</div>
+                        <div class="stat-value text-sage" id="stat-month">0 đ</div>
+                        <div class="stat-sub" id="stat-month-label">Tháng này</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-title font-display">Doanh Thu Quý Này</div>
+                        <div class="stat-value text-mustard" id="stat-quarter">0 đ</div>
+                        <div class="stat-sub" id="stat-quarter-label">Quý --</div>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <div class="card history-card">
+                    <div class="card-header">
+                        <h2 class="font-display">Lịch Sử Giao Dịch Vừa Nhập</h2>
+                        <button id="btn-sync-all" class="btn btn-sm btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"
+                                stroke-linejoin="miter">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                <path d="M3 3v5h5" />
+                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                <path d="M16 16h5v5" />
+                            </svg>
+                            Đồng Bộ Lại Tất Cả
+                        </button>
+                    </div>
+
+                    <div class="history-list" id="history-list">
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"
+                                stroke-linejoin="miter">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                            <p>Chưa có giao dịch nào. Hãy nhập thông tin ở bên trái!</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- Modal Config Web App URL -->
+        <div class="modal-overlay" id="modal-config">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="font-display">Cấu Hình Đường Dẫn Google Apps Script</h3>
+                    <button class="btn-close" id="btn-close-config">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">
+                        Nhập <strong>Web App URL</strong> mà bạn thu được sau khi Deploy Google Apps Script dưới dạng
+                        Web App (Quyền truy cập: <em>Anyone/Bất kỳ ai</em>).
+                    </p>
+                    <div class="form-group">
+                        <label for="script-url-input">Google Apps Script Web App URL</label>
+                        <input type="url" id="script-url-input"
+                            placeholder="https://script.google.com/macros/s/AKfycbx.../exec" />
+                    </div>
+                    <div class="notice-box">
+                        💡 <strong>Lưu ý:</strong> Nếu chưa có URL, bạn bấm vào nút <strong>"Mã Google Script"</strong>
+                        ở góc trên bên phải để xem hướng dẫn tạo trong 1 phút!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-save-config" class="btn btn-primary">Lưu Cấu Hình</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Google Script Code -->
+        <div class="modal-overlay" id="modal-code">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3 class="font-display">Mã Google Apps Script & Hướng Dẫn Cấu Hình Sheet</h3>
+                    <button class="btn-close" id="btn-close-code">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <ol class="step-guide">
+                        <li>Mở file <strong>Google Sheet</strong> của bạn -> Chọn <strong>Extensions (Tiện ích mở
+                                rộng)</strong> -> <strong>Apps Script</strong>.</li>
+                        <li>Xóa toàn bộ code cũ và dán đoạn code dưới đây vào file <code>Code.gs</code>:</li>
+                    </ol>
+                    <div class="code-container">
+                        <button id="btn-copy-code" class="btn btn-sm btn-secondary copy-btn">Copy Code</button>
+                        <pre><code id="script-code-block"></code></pre>
+                    </div>
+                    <ol class="step-guide" start="3">
+                        <li>Nhấp vào nút <strong>Deploy (Triển khai)</strong> -> <strong>New deployment (Triển khai
+                                mới)</strong>.</li>
+                        <li>Chọn loại <strong>Web App</strong>. Cấu hình:
+                            <ul>
+                                <li><strong>Execute as:</strong> Me (Tôi)</li>
+                                <li><strong>Who has access:</strong> Anyone (Bất kỳ ai)</li>
+                            </ul>
+                        </li>
+                        <li>Bấm <strong>Deploy</strong>, cấp quyền truy cập Google Account, sau đó copy lấy <strong>Web
+                                App URL</strong> dán vào phần cấu hình của app này!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
