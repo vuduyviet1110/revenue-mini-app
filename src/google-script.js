@@ -1,14 +1,11 @@
 /**
- * GOOGLE APPS SCRIPT - TỔNG HỢP DOANH THU TỰ ĐỘNG
+ * GOOGLE APPS SCRIPT - TỔNG HỢP DOANH THU TỰ ĐỘNG & TẢI DỮ LIỆU 2 CHIỀU
  * 
- * Hướng dẫn cài đặt:
+ * Hướng dẫn cài đặt / Cập nhật:
  * 1. Mở file Google Sheet của bạn -> Tiện ích mở rộng (Extensions) -> Apps Script
- * 2. Dán toàn bộ mã dưới đây vào file Code.gs (xóa hết code mặc định)
- * 3. Bấm Deploy (Triển khai) -> New deployment (Triển khai mới)
- * 4. Chọn loại: Web App
- *    - Execute as: Me (Tôi)
- *    - Who has access: Anyone (Bất kỳ ai)
- * 5. Coppy lấy URL nhận được dán vào Mini App.
+ * 2. Dán toàn bộ mã dưới đây vào file Code.gs (thay thế code cũ)
+ * 3. Bấm Deploy (Triển khai) -> Manage deployments (Quản lý triển khai) -> Chỉnh sửa (biểu tượng bút chì) -> Phiên bản mới (New version) -> Triển khai
+ * 4. Copy URL Web App dán vào ứng dụng Revenue Tracker.
  */
 
 function doPost(e) {
@@ -27,8 +24,8 @@ function doPost(e) {
             sheet.setRowHeight(1, 35);
         }
 
-        // Tạo ID giao dịch ngẫu nhiên
-        var transactionId = 'TX-' + Math.floor(Math.random() * 900000 + 100000);
+        // Tạo ID giao dịch nếu chưa có
+        var transactionId = data.id || ('TX-' + Math.floor(Math.random() * 900000 + 100000));
 
         // Dữ liệu hàng mới
         var newRow = [
@@ -73,7 +70,49 @@ function doPost(e) {
 }
 
 function doGet(e) {
-    return ContentService
-        .createTextOutput(JSON.stringify({ status: 'active', service: 'Revenue Sync Web App API' }))
-        .setMimeType(ContentService.MimeType.JSON);
+    try {
+        var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+        var lastRow = sheet.getLastRow();
+
+        if (lastRow <= 1) {
+            return ContentService
+                .createTextOutput(JSON.stringify({ status: 'success', data: [] }))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // Đọc toàn bộ dữ liệu (bỏ qua hàng tiêu đề row 1)
+        var range = sheet.getRange(2, 1, lastRow - 1, 9);
+        var values = range.getValues();
+
+        var transactions = values.map(function (row) {
+            return {
+                id: String(row[0] || ''),
+                date: String(row[1] || ''),
+                itemName: String(row[2] || ''),
+                amount: Number(row[3]) || 0,
+                paymentMethod: String(row[4] || ''),
+                month: String(row[5] || ''),
+                quarter: String(row[6] || ''),
+                year: Number(row[7]) || new Date().getFullYear(),
+                notes: String(row[8] || ''),
+                synced: true
+            };
+        });
+
+        return ContentService
+            .createTextOutput(JSON.stringify({
+                status: 'success',
+                data: transactions
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+
+    } catch (error) {
+        return ContentService
+            .createTextOutput(JSON.stringify({
+                status: 'error',
+                message: error.toString()
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
 }
+

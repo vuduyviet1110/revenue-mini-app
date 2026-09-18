@@ -55,7 +55,7 @@ class RevenueApp {
         this.init();
     }
 
-    private init() {
+    private async init() {
         this.loadState();
         this.setDefaultDate();
         this.attachEvents();
@@ -63,6 +63,11 @@ class RevenueApp {
         this.renderStats();
         this.renderHistory();
         this.updateStatusIndicator();
+
+        // Tải dữ liệu 2 chiều từ Google Sheet nếu đã cấu hình URL
+        if (this.scriptUrl) {
+            await this.fetchFromGoogleSheet();
+        }
     }
 
     private loadState() {
@@ -77,6 +82,43 @@ class RevenueApp {
 
         this.scriptUrl = localStorage.getItem(STORAGE_KEY_SCRIPT_URL) || '';
         this.scriptUrlInput.value = this.scriptUrl;
+    }
+
+    private async fetchFromGoogleSheet() {
+        if (!this.scriptUrl) return;
+
+        this.syncStatusEl.innerHTML = `<span class="status-dot sync-loading"></span> Đang đồng bộ từ Sheet...`;
+
+        try {
+            const res = await fetch(this.scriptUrl);
+            const result = await res.json();
+
+            if (result && result.status === 'success' && Array.isArray(result.data)) {
+                // Sắp xếp giao dịch mới nhất lên đầu dựa trên createdAt / date
+                const fetchedItems: RevenueItem[] = result.data.map((item: any) => ({
+                    id: item.id || ('tx_' + Math.random().toString(36).substring(2, 8)),
+                    date: item.date || '',
+                    itemName: item.itemName || 'Không tên',
+                    amount: Number(item.amount) || 0,
+                    paymentMethod: item.paymentMethod || 'Tiền mặt',
+                    month: item.month || '',
+                    quarter: item.quarter || '',
+                    year: Number(item.year) || new Date().getFullYear(),
+                    notes: item.notes || '',
+                    synced: true,
+                    createdAt: item.date ? new Date(item.date).getTime() || Date.now() : Date.now()
+                })).reverse(); // Google sheet append ở cuối -> đảo ngược để mới nhất lên đầu
+
+                this.transactions = fetchedItems;
+                this.saveState();
+                this.renderStats();
+                this.renderHistory();
+                this.updateStatusIndicator();
+            }
+        } catch (err) {
+            console.error('Lỗi tải dữ liệu từ Google Sheet:', err);
+            this.updateStatusIndicator();
+        }
     }
 
     private saveState() {
@@ -125,6 +167,9 @@ class RevenueApp {
             this.saveState();
             this.updateStatusIndicator();
             this.modalConfig.classList.remove('active');
+            if (this.scriptUrl) {
+                this.fetchFromGoogleSheet();
+            }
             alert('Đã lưu Google Apps Script Web App URL!');
         });
 
@@ -266,23 +311,24 @@ class RevenueApp {
     }
 
     private async syncPendingTransactions() {
-        const pending = this.transactions.filter((t) => !t.synced);
-        if (pending.length === 0) {
-            alert('Tất cả giao dịch đã được đồng bộ!');
-            return;
-        }
         if (!this.scriptUrl) {
             alert('Vui lòng cấu hình Web App URL trước!');
             this.modalConfig.classList.add('active');
             return;
         }
 
-        let count = 0;
-        for (const item of pending) {
-            await this.sendToGoogleSheet(item);
-            count++;
+        const pending = this.transactions.filter((t) => !t.synced);
+        if (pending.length > 0) {
+            let count = 0;
+            for (const item of pending) {
+                await this.sendToGoogleSheet(item);
+                count++;
+            }
+            alert(`Đã hoàn tất gửi ${count} giao dịch chưa bắn lên Google Sheet!`);
         }
-        alert(`Đã hoàn tất gửi ${count} giao dịch lên Google Sheet!`);
+
+        // Tải lại dữ liệu mới nhất từ Google Sheet
+        await this.fetchFromGoogleSheet();
     }
 
     private renderStats() {
