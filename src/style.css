@@ -738,8 +738,102 @@ body.dark-mode .history-item:hover {
     transition: width 0.4s ease;
 }
 
-.chart-bar-fill.banking { background: var(--color-terracotta); }
-.chart-bar-fill.cash { background: var(--color-sage); }
-.chart-bar-fill.card { background: var(--color-mustard); }
-.chart-bar-fill.momo { background: #d946ef; }
-.chart-bar-fill.cod { background: #0ea5e9; }
+.chart-bar-fill.banking {
+    background: var(--color-terracotta);
+}
+
+.chart-bar-fill.cash {
+    background: var(--color-sage);
+}
+
+.chart-bar-fill.card {
+    background: var(--color-mustard);
+}
+
+.chart-bar-fill.momo {
+    background: #d946ef;
+}
+
+.chart-bar-fill.cod {
+    background: #0ea5e9;
+}
+
+/* Skeleton Loading Animation */
+@keyframes skeleton-pulse {
+    0% {
+        opacity: 0.6;
+        background-color: rgba(197, 137, 102, 0.15);
+    }
+
+    50% {
+        opacity: 1;
+        background-color: rgba(197, 137, 102, 0.35);
+    }
+
+    100% {
+        opacity: 0.6;
+        background-color: rgba(197, 137, 102, 0.15);
+    }
+}
+
+.skeleton-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: var(--border-width) solid var(--color-border);
+    margin-bottom: 0.8rem;
+    background: var(--color-surface);
+    box-shadow: 3px 3px 0px var(--color-border);
+}
+
+.skeleton-line {
+    border-radius: 4px;
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-line.title {
+    width: 140px;
+    height: 16px;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.subtitle {
+    width: 200px;
+    height: 12px;
+}
+
+.skeleton-line.amount {
+    width: 90px;
+    height: 18px;
+    margin-bottom: 6px;
+}
+
+.skeleton-line.badge {
+    width: 70px;
+    height: 14px;
+}
+
+/* Enhanced Sync Banner Indicator */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border: 1.5px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.status-indicator.syncing {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #f59e0b;
+}
+
+.status-indicator.synced-success {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #22c55e;
+}

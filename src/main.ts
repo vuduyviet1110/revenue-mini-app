@@ -118,10 +118,36 @@ class RevenueApp {
         this.applyTheme();
     }
 
+    private renderSkeletonLoading() {
+        this.historyListEl.innerHTML = Array(4)
+            .fill(0)
+            .map(
+                () => `
+          <div class="skeleton-item">
+            <div>
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line subtitle"></div>
+            </div>
+            <div>
+              <div class="skeleton-line amount"></div>
+              <div class="skeleton-line badge"></div>
+            </div>
+          </div>
+        `
+            )
+            .join('');
+    }
+
     private async fetchFromGoogleSheet() {
         if (!this.scriptUrl) return;
 
-        this.syncStatusEl.innerHTML = `<span class="status-dot sync-loading"></span> Đang đồng bộ...`;
+        this.syncStatusEl.className = 'status-indicator syncing';
+        this.syncStatusEl.innerHTML = `<span class="status-dot sync-loading"></span> Đang tải dữ liệu từ Google Sheet...`;
+
+        // If local list is empty, show skeleton loaders
+        if (this.transactions.length === 0) {
+            this.renderSkeletonLoading();
+        }
 
         try {
             const res = await fetch(this.scriptUrl);
@@ -145,13 +171,21 @@ class RevenueApp {
                 this.transactions = fetchedItems;
                 this.saveState();
                 this.applyFilter();
-                this.updateStatusIndicator();
+
+                this.syncStatusEl.className = 'status-indicator synced-success';
+                this.syncStatusEl.innerHTML = `<span class="status-dot online"></span> Đã đồng bộ ${fetchedItems.length} giao dịch từ Sheet`;
+
+                // Return status to default after 4 seconds
+                setTimeout(() => {
+                    this.updateStatusIndicator();
+                }, 4000);
             }
         } catch (err) {
             console.error('Lỗi tải dữ liệu từ Google Sheet:', err);
             this.updateStatusIndicator();
         }
     }
+
 
     private saveState() {
         localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(this.transactions));
