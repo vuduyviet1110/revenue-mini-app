@@ -621,8 +621,125 @@ pre {
     max-height: 280px;
 }
 
-.copy-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+/* Dark Mode Theme Overrides */
+body.dark-mode {
+    --color-bg: #1e1b18;
+    --color-surface: rgba(35, 30, 27, 0.94);
+    --color-text: #f3ece4;
+    --color-muted: #b8a89a;
+    --color-border: #f3ece4;
+    --color-primary: #f3ece4;
+    --color-on-primary: #1e1b18;
+    --shadow-card: 5px 5px 0px #f3ece4;
+    --shadow-card-hover: 7px 7px 0px #f3ece4;
+    --shadow-btn: 3px 3px 0px #f3ece4;
 }
+
+body.dark-mode input[type="text"],
+body.dark-mode input[type="number"],
+body.dark-mode input[type="url"],
+body.dark-mode input[type="datetime-local"],
+body.dark-mode select {
+    background: rgba(45, 39, 35, 0.9);
+    color: #f3ece4;
+    border-color: #f3ece4;
+}
+
+body.dark-mode .app-header {
+    background: rgba(35, 30, 27, 0.95);
+    border-color: #f3ece4;
+    box-shadow: var(--shadow-card);
+}
+
+body.dark-mode .history-item {
+    background: rgba(45, 39, 35, 0.9);
+    border-color: #f3ece4;
+}
+
+body.dark-mode .history-item:hover {
+    background: #362e29;
+}
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.filter-search {
+    flex: 2;
+}
+
+.filter-select {
+    flex: 1;
+}
+
+/* Action Buttons in History Items */
+.history-actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+    background: var(--color-terracotta);
+    color: #ffffff;
+}
+
+.btn-icon.delete-btn:hover {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+/* Analytics Chart Bars */
+.chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+
+.chart-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.chart-label-group {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.chart-bar-bg {
+    height: 18px;
+    background: rgba(60, 47, 47, 0.1);
+    border: 1.5px solid var(--color-border);
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-bar-fill {
+    height: 100%;
+    background: var(--color-terracotta);
+    transition: width 0.4s ease;
+}
+
+.chart-bar-fill.banking { background: var(--color-terracotta); }
+.chart-bar-fill.cash { background: var(--color-sage); }
+.chart-bar-fill.card { background: var(--color-mustard); }
+.chart-bar-fill.momo { background: #d946ef; }
+.chart-bar-fill.cod { background: #0ea5e9; }

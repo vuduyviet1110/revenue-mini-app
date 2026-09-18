@@ -31,14 +31,20 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button id="btn-config-script" class="btn btn-secondary">
+                <button id="btn-theme-toggle" class="btn btn-outline" title="Chuyển đổi giao diện sáng / tối">
+                    <span id="theme-icon">🌙</span> Dark Mode
+                </button>
+                <button id="btn-export-excel" class="btn btn-secondary">
+                    📊 Xuất CSV/Excel
+                </button>
+                <button id="btn-config-script" class="btn btn-outline">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
                         <path
                             d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                         <circle cx="12" cy="12" r="3" />
                     </svg>
-                    Cấu hình Web App URL
+                    Cấu Hình URL
                 </button>
                 <button id="btn-view-code" class="btn btn-outline">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -57,13 +63,15 @@
             <!-- Left Column: Form nhập liệu -->
             <section class="card form-card">
                 <div class="card-header">
-                    <h2 class="font-display"><span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới</h2>
+                    <h2 class="font-display" id="form-title"><span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới</h2>
                     <span class="status-indicator" id="sync-status">
                         <span class="status-dot online"></span> Sẵn sàng đồng bộ
                     </span>
                 </div>
 
                 <form id="revenue-form">
+                    <input type="hidden" id="edit-id" value="" />
+
                     <div class="form-group">
                         <label for="item-name">Tên đơn hàng / Sản phẩm</label>
                         <div class="input-wrapper">
@@ -115,13 +123,18 @@
                         <input type="text" id="notes" placeholder="Mã khách hàng, mã vận đơn..." />
                     </div>
 
-                    <button type="submit" id="btn-submit" class="btn btn-primary btn-block">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
-                            <path d="m5 12 5 5L20 7" />
-                        </svg>
-                        Ghi Nhận & Bắn Về Google Sheet
-                    </button>
+                    <div class="form-actions">
+                        <button type="submit" id="btn-submit" class="btn btn-primary btn-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+                                <path d="m5 12 5 5L20 7" />
+                            </svg>
+                            <span id="btn-submit-text">Ghi Nhận & Bắn Về Google Sheet</span>
+                        </button>
+                        <button type="button" id="btn-cancel-edit" class="btn btn-outline btn-block" style="display: none; margin-top: 0.5rem;">
+                            Hủy Chỉnh Sửa
+                        </button>
+                    </div>
                 </form>
             </section>
 
@@ -149,10 +162,10 @@
                     </div>
                 </div>
 
-                <!-- History List -->
+                <!-- History List & Filter -->
                 <div class="card history-card">
                     <div class="card-header">
-                        <h2 class="font-display">Lịch Sử Giao Dịch Vừa Nhập</h2>
+                        <h2 class="font-display">Lịch Sử Giao Dịch</h2>
                         <button id="btn-sync-all" class="btn btn-sm btn-outline">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"
@@ -162,8 +175,21 @@
                                 <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
                                 <path d="M16 16h5v5" />
                             </svg>
-                            Đồng Bộ Lại Tất Cả
+                            Đồng Bộ Sheet
                         </button>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="filter-bar">
+                        <input type="text" id="search-input" placeholder="🔍 Tìm theo tên, ghi chú..." class="filter-search" />
+                        <select id="filter-payment" class="filter-select">
+                            <option value="ALL">Tất cả PT thanh toán</option>
+                            <option value="Chuyển khoản Banking">Chuyển khoản Banking</option>
+                            <option value="Tiền mặt">Tiền mặt</option>
+                            <option value="Thẻ tín dụng / ATM">Thẻ tín dụng / ATM</option>
+                            <option value="Ví MoMo / ZaloPay">Ví MoMo / ZaloPay</option>
+                            <option value="COD Thu Hộ">COD Thu Hộ</option>
+                        </select>
                     </div>
 
                     <div class="history-list" id="history-list">
@@ -177,7 +203,7 @@
                                 <line x1="16" y1="17" x2="8" y2="17" />
                                 <polyline points="10 9 9 9 8 9" />
                             </svg>
-                            <p>Chưa có giao dịch nào. Hãy nhập thông tin ở bên trái!</p>
+                            <p>Chưa có giao dịch nào được chọn.</p>
                         </div>
                     </div>
                 </div>
@@ -185,6 +211,17 @@
             </section>
 
         </main>
+
+        <!-- Chart Section -->
+        <section class="card chart-section" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="font-display"><span class="dot mustard"></span> Phân Tích Doanh Thu Theo Phương Thức Thanh Toán</h2>
+            </div>
+            <div class="chart-container" id="chart-container">
+                <!-- Bar Breakdown -->
+                <div class="chart-bars" id="chart-bars"></div>
+            </div>
+        </section>
 
         <!-- Modal Config Web App URL -->
         <div class="modal-overlay" id="modal-config">

@@ -15,16 +15,24 @@ interface RevenueItem {
     createdAt: number;
 }
 
-// Local Storage Keys
 const STORAGE_KEY_ITEMS = 'revenue_mini_app_transactions_v1';
 const STORAGE_KEY_SCRIPT_URL = 'revenue_mini_app_script_url_v1';
+const STORAGE_KEY_THEME = 'revenue_mini_app_theme_v1';
 
 class RevenueApp {
     private transactions: RevenueItem[] = [];
+    private filteredTransactions: RevenueItem[] = [];
     private scriptUrl: string = '';
+    private editingId: string | null = null;
+    private isDarkMode: boolean = false;
 
     // DOM Elements
     private form = document.getElementById('revenue-form') as HTMLFormElement;
+    private editIdInput = document.getElementById('edit-id') as HTMLInputElement;
+    private formTitle = document.getElementById('form-title') as HTMLElement;
+    private btnSubmitText = document.getElementById('btn-submit-text') as HTMLElement;
+    private btnCancelEdit = document.getElementById('btn-cancel-edit') as HTMLElement;
+
     private itemNameInput = document.getElementById('item-name') as HTMLInputElement;
     private amountInput = document.getElementById('amount') as HTMLInputElement;
     private amountPreview = document.getElementById('amount-preview') as HTMLElement;
@@ -46,6 +54,16 @@ class RevenueApp {
     private historyListEl = document.getElementById('history-list') as HTMLElement;
     private syncStatusEl = document.getElementById('sync-status') as HTMLElement;
 
+    // Filters
+    private searchInput = document.getElementById('search-input') as HTMLInputElement;
+    private filterPaymentSelect = document.getElementById('filter-payment') as HTMLSelectElement;
+
+    // Theme & Export & Chart
+    private btnThemeToggle = document.getElementById('btn-theme-toggle') as HTMLElement;
+    private themeIcon = document.getElementById('theme-icon') as HTMLElement;
+    private btnExportExcel = document.getElementById('btn-export-excel') as HTMLElement;
+    private chartBarsEl = document.getElementById('chart-bars') as HTMLElement;
+
     // Modals
     private modalConfig = document.getElementById('modal-config') as HTMLElement;
     private modalCode = document.getElementById('modal-code') as HTMLElement;
@@ -60,11 +78,9 @@ class RevenueApp {
         this.setDefaultDate();
         this.attachEvents();
         this.updateDateCalculations();
-        this.renderStats();
-        this.renderHistory();
-        this.updateStatusIndicator();
+        this.applyTheme();
+        this.applyFilter();
 
-        // Tải dữ liệu 2 chiều từ Google Sheet nếu đã cấu hình URL
         if (this.scriptUrl) {
             await this.fetchFromGoogleSheet();
         }
@@ -82,19 +98,36 @@ class RevenueApp {
 
         this.scriptUrl = localStorage.getItem(STORAGE_KEY_SCRIPT_URL) || '';
         this.scriptUrlInput.value = this.scriptUrl;
+
+        this.isDarkMode = localStorage.getItem(STORAGE_KEY_THEME) === 'dark';
+    }
+
+    private applyTheme() {
+        if (this.isDarkMode) {
+            document.body.classList.add('dark-mode');
+            this.themeIcon.textContent = '☀️';
+        } else {
+            document.body.classList.remove('dark-mode');
+            this.themeIcon.textContent = '🌙';
+        }
+    }
+
+    private toggleTheme() {
+        this.isDarkMode = !this.isDarkMode;
+        localStorage.setItem(STORAGE_KEY_THEME, this.isDarkMode ? 'dark' : 'light');
+        this.applyTheme();
     }
 
     private async fetchFromGoogleSheet() {
         if (!this.scriptUrl) return;
 
-        this.syncStatusEl.innerHTML = `<span class="status-dot sync-loading"></span> Đang đồng bộ từ Sheet...`;
+        this.syncStatusEl.innerHTML = `<span class="status-dot sync-loading"></span> Đang đồng bộ...`;
 
         try {
             const res = await fetch(this.scriptUrl);
             const result = await res.json();
 
             if (result && result.status === 'success' && Array.isArray(result.data)) {
-                // Sắp xếp giao dịch mới nhất lên đầu dựa trên createdAt / date
                 const fetchedItems: RevenueItem[] = result.data.map((item: any) => ({
                     id: item.id || ('tx_' + Math.random().toString(36).substring(2, 8)),
                     date: item.date || '',
@@ -107,12 +140,11 @@ class RevenueApp {
                     notes: item.notes || '',
                     synced: true,
                     createdAt: item.date ? new Date(item.date).getTime() || Date.now() : Date.now()
-                })).reverse(); // Google sheet append ở cuối -> đảo ngược để mới nhất lên đầu
+                })).reverse();
 
                 this.transactions = fetchedItems;
                 this.saveState();
-                this.renderStats();
-                this.renderHistory();
+                this.applyFilter();
                 this.updateStatusIndicator();
             }
         } catch (err) {
@@ -128,7 +160,6 @@ class RevenueApp {
 
     private setDefaultDate() {
         const now = new Date();
-        // Format YYYY-MM-DDTHH:mm
         const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
             .toISOString()
             .slice(0, 16);
@@ -136,24 +167,28 @@ class RevenueApp {
     }
 
     private attachEvents() {
-        // Amount formatting preview
+        this.btnThemeToggle.addEventListener('click', () => this.toggleTheme());
+        this.btnExportExcel.addEventListener('click', () => this.exportCSV());
+
         this.amountInput.addEventListener('input', () => {
             const val = Number(this.amountInput.value) || 0;
             this.amountPreview.textContent = this.formatCurrency(val);
         });
 
-        // Date change listener -> recalculate month, quarter, year
         this.saleDateInput.addEventListener('change', () => {
             this.updateDateCalculations();
         });
 
-        // Form Submit
+        this.searchInput.addEventListener('input', () => this.applyFilter());
+        this.filterPaymentSelect.addEventListener('change', () => this.applyFilter());
+
         this.form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleSubmit();
         });
 
-        // Config Modal
+        this.btnCancelEdit.addEventListener('click', () => this.resetForm());
+
         document.getElementById('btn-config-script')?.addEventListener('click', () => {
             this.modalConfig.classList.add('active');
         });
@@ -173,7 +208,6 @@ class RevenueApp {
             alert('Đã lưu Google Apps Script Web App URL!');
         });
 
-        // Code Modal
         document.getElementById('btn-view-code')?.addEventListener('click', () => {
             const codeBlock = document.getElementById('script-code-block');
             if (codeBlock) codeBlock.textContent = googleScriptCode;
@@ -189,7 +223,6 @@ class RevenueApp {
             alert('Đã sao chép mã Google Apps Script vào bộ nhớ tạm!');
         });
 
-        // Sync All Button
         document.getElementById('btn-sync-all')?.addEventListener('click', () => {
             this.syncPendingTransactions();
         });
@@ -220,8 +253,23 @@ class RevenueApp {
         if (this.scriptUrl) {
             this.syncStatusEl.innerHTML = `<span class="status-dot online"></span> Đã kết nối Google Sheet`;
         } else {
-            this.syncStatusEl.innerHTML = `<span class="status-dot offline"></span> Chưa cấu hình URL (Chỉ lưu local)`;
+            this.syncStatusEl.innerHTML = `<span class="status-dot offline"></span> Chưa cấu hình URL (Lưu local)`;
         }
+    }
+
+    private applyFilter() {
+        const q = this.searchInput.value.toLowerCase().trim();
+        const paymentFilter = this.filterPaymentSelect.value;
+
+        this.filteredTransactions = this.transactions.filter(t => {
+            const matchesQuery = !q || t.itemName.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q));
+            const matchesPayment = paymentFilter === 'ALL' || t.paymentMethod === paymentFilter;
+            return matchesQuery && matchesPayment;
+        });
+
+        this.renderStats();
+        this.renderHistory();
+        this.renderChart();
     }
 
     private async handleSubmit() {
@@ -239,32 +287,101 @@ class RevenueApp {
         const d = new Date(dateVal);
         const info = this.getDateInfo(d);
 
-        const newItem: RevenueItem = {
-            id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-            date: d.toLocaleString('vi-VN'),
-            itemName,
-            amount,
-            paymentMethod,
-            month: info.monthStr,
-            quarter: info.quarterStr,
-            year: info.year,
-            notes,
-            synced: false,
-            createdAt: d.getTime()
-        };
+        if (this.editingId) {
+            // Edit Existing Item
+            const idx = this.transactions.findIndex(t => t.id === this.editingId);
+            if (idx !== -1) {
+                const updatedItem: RevenueItem = {
+                    ...this.transactions[idx],
+                    itemName,
+                    amount,
+                    paymentMethod,
+                    date: d.toLocaleString('vi-VN'),
+                    month: info.monthStr,
+                    quarter: info.quarterStr,
+                    year: info.year,
+                    notes,
+                    synced: false
+                };
 
-        // Add to state
-        this.transactions.unshift(newItem);
+                this.transactions[idx] = updatedItem;
+                this.saveState();
+                this.resetForm();
+                this.applyFilter();
+
+                await this.sendActionToGoogleSheet('edit', updatedItem);
+            }
+        } else {
+            // Create New Item
+            const newItem: RevenueItem = {
+                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                date: d.toLocaleString('vi-VN'),
+                itemName,
+                amount,
+                paymentMethod,
+                month: info.monthStr,
+                quarter: info.quarterStr,
+                year: info.year,
+                notes,
+                synced: false,
+                createdAt: d.getTime()
+            };
+
+            this.transactions.unshift(newItem);
+            this.saveState();
+
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.8 }
+            });
+
+            this.resetForm();
+            this.applyFilter();
+
+            await this.sendActionToGoogleSheet('create', newItem);
+        }
+    }
+
+    private editTransaction(id: string) {
+        const item = this.transactions.find(t => t.id === id);
+        if (!item) return;
+
+        this.editingId = item.id;
+        this.editIdInput.value = item.id;
+        this.itemNameInput.value = item.itemName;
+        this.amountInput.value = item.amount.toString();
+        this.amountPreview.textContent = this.formatCurrency(item.amount);
+        this.paymentMethodSelect.value = item.paymentMethod;
+        this.notesInput.value = item.notes || '';
+
+        this.formTitle.innerHTML = `<span class="dot mustard"></span> Hiệu Chỉnh Giao Dịch`;
+        this.btnSubmitText.textContent = `Lưu Cập Nhật Giao Dịch`;
+        this.btnCancelEdit.style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    private async deleteTransaction(id: string) {
+        const item = this.transactions.find(t => t.id === id);
+        if (!item) return;
+
+        if (!confirm(`Bạn có chắc chắn muốn xóa giao dịch "${item.itemName}" (${this.formatCurrency(item.amount)})?`)) {
+            return;
+        }
+
+        // Xóa local
+        this.transactions = this.transactions.filter(t => t.id !== id);
         this.saveState();
+        this.applyFilter();
 
-        // Trigger confetti visual reward
-        confetti({
-            particleCount: 50,
-            spread: 60,
-            origin: { y: 0.8 }
-        });
+        // Xóa trên Google Sheet
+        await this.sendActionToGoogleSheet('delete', item);
+    }
 
-        // Reset Form
+    private resetForm() {
+        this.editingId = null;
+        this.editIdInput.value = '';
         this.itemNameInput.value = '';
         this.amountInput.value = '';
         this.amountPreview.textContent = '0 đ';
@@ -272,41 +389,42 @@ class RevenueApp {
         this.setDefaultDate();
         this.updateDateCalculations();
 
-        // Update UI
-        this.renderStats();
-        this.renderHistory();
-
-        // Send to Google Sheet
-        await this.sendToGoogleSheet(newItem);
+        this.formTitle.innerHTML = `<span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới`;
+        this.btnSubmitText.textContent = `Ghi Nhận & Bắn Về Google Sheet`;
+        this.btnCancelEdit.style.display = 'none';
     }
 
-    private async sendToGoogleSheet(item: RevenueItem) {
+    private async sendActionToGoogleSheet(action: 'create' | 'edit' | 'delete', item: RevenueItem) {
         if (!this.scriptUrl) {
-            console.warn('Chưa cấu hình Google Apps Script URL. Giao dịch được lưu ở bộ nhớ máy.');
+            console.warn('Chưa cấu hình Google Apps Script URL.');
             return;
         }
 
         try {
-            // POST to Google Apps Script Web App
-            // Note: Using no-cors mode to bypass CORS restriction if redirect occurs
+            const payload = {
+                action,
+                ...item
+            };
+
             await fetch(this.scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: {
                     'Content-Type': 'text/plain;charset=utf-8'
                 },
-                body: JSON.stringify(item)
+                body: JSON.stringify(payload)
             });
 
-            // Mark item as synced
-            const idx = this.transactions.findIndex((t) => t.id === item.id);
-            if (idx !== -1) {
-                this.transactions[idx].synced = true;
-                this.saveState();
-                this.renderHistory();
+            if (action !== 'delete') {
+                const idx = this.transactions.findIndex(t => t.id === item.id);
+                if (idx !== -1) {
+                    this.transactions[idx].synced = true;
+                    this.saveState();
+                    this.applyFilter();
+                }
             }
         } catch (err) {
-            console.error('Lỗi bắn Google Sheet:', err);
+            console.error(`Lỗi thực hiện ${action} lên Google Sheet:`, err);
         }
     }
 
@@ -317,17 +435,16 @@ class RevenueApp {
             return;
         }
 
-        const pending = this.transactions.filter((t) => !t.synced);
+        const pending = this.transactions.filter(t => !t.synced);
         if (pending.length > 0) {
             let count = 0;
             for (const item of pending) {
-                await this.sendToGoogleSheet(item);
+                await this.sendActionToGoogleSheet('create', item);
                 count++;
             }
-            alert(`Đã hoàn tất gửi ${count} giao dịch chưa bắn lên Google Sheet!`);
+            alert(`Đã hoàn tất bắn ${count} giao dịch lên Google Sheet!`);
         }
 
-        // Tải lại dữ liệu mới nhất từ Google Sheet
         await this.fetchFromGoogleSheet();
     }
 
@@ -345,18 +462,15 @@ class RevenueApp {
             const tDate = new Date(t.createdAt);
             const tInfo = this.getDateInfo(tDate);
 
-            // Today
             if (tDate.toLocaleDateString('vi-VN') === todayStr) {
                 todayTotal += t.amount;
                 todayCount++;
             }
 
-            // Month
             if (tInfo.monthStr === currentInfo.monthStr && tInfo.year === currentInfo.year) {
                 monthTotal += t.amount;
             }
 
-            // Quarter
             if (tInfo.quarterStr === currentInfo.quarterStr && tInfo.year === currentInfo.year) {
                 quarterTotal += t.amount;
             }
@@ -373,25 +487,30 @@ class RevenueApp {
     }
 
     private renderHistory() {
-        if (this.transactions.length === 0) {
+        if (this.filteredTransactions.length === 0) {
             this.historyListEl.innerHTML = `
         <div class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          <p>Chưa có giao dịch nào được nhập.</p>
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <p>Không tìm thấy giao dịch nào phù hợp.</p>
         </div>
       `;
             return;
         }
 
-        this.historyListEl.innerHTML = this.transactions
+        this.historyListEl.innerHTML = this.filteredTransactions
             .map((item) => `
-        <div class="history-item">
+        <div class="history-item" data-id="${item.id}">
           <div class="item-info">
             <span class="item-name">${this.escapeHtml(item.itemName)}</span>
             <div class="item-meta">
               <span>📅 ${item.date}</span>
-              <span>• ${item.month} (${item.quarter})</span>
+              <span>• ${item.month}</span>
               <span>• ${item.paymentMethod}</span>
+              ${item.notes ? `<span>• 📝 ${this.escapeHtml(item.notes)}</span>` : ''}
+            </div>
+            <div class="history-actions">
+              <button class="btn-icon edit-btn" data-id="${item.id}">✏️ Sửa</button>
+              <button class="btn-icon delete-btn" data-id="${item.id}">🗑️ Xóa</button>
             </div>
           </div>
           <div class="item-right">
@@ -403,6 +522,104 @@ class RevenueApp {
         </div>
       `)
             .join('');
+
+        // Attach action listeners
+        this.historyListEl.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = (e.currentTarget as HTMLElement).dataset.id;
+                if (id) this.editTransaction(id);
+            });
+        });
+
+        this.historyListEl.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = (e.currentTarget as HTMLElement).dataset.id;
+                if (id) this.deleteTransaction(id);
+            });
+        });
+    }
+
+    private renderChart() {
+        const methodTotals: { [key: string]: number } = {
+            'Chuyển khoản Banking': 0,
+            'Tiền mặt': 0,
+            'Thẻ tín dụng / ATM': 0,
+            'Ví MoMo / ZaloPay': 0,
+            'COD Thu Hộ': 0
+        };
+
+        let grandTotal = 0;
+        for (const t of this.transactions) {
+            if (methodTotals[t.paymentMethod] !== undefined) {
+                methodTotals[t.paymentMethod] += t.amount;
+            } else {
+                methodTotals[t.paymentMethod] = t.amount;
+            }
+            grandTotal += t.amount;
+        }
+
+        if (grandTotal === 0) {
+            this.chartBarsEl.innerHTML = `<div class="empty-state"><p>Chưa có dữ liệu để vẽ biểu đồ phân tích.</p></div>`;
+            return;
+        }
+
+        const classMap: { [key: string]: string } = {
+            'Chuyển khoản Banking': 'banking',
+            'Tiền mặt': 'cash',
+            'Thẻ tín dụng / ATM': 'card',
+            'Ví MoMo / ZaloPay': 'momo',
+            'COD Thu Hộ': 'cod'
+        };
+
+        this.chartBarsEl.innerHTML = Object.keys(methodTotals)
+            .map(method => {
+                const amount = methodTotals[method];
+                const pct = grandTotal > 0 ? Math.round((amount / grandTotal) * 100) : 0;
+                const cls = classMap[method] || 'banking';
+
+                return `
+          <div class="chart-row">
+            <div class="chart-label-group">
+              <span>${method} (${pct}%)</span>
+              <span>${this.formatCurrency(amount)}</span>
+            </div>
+            <div class="chart-bar-bg">
+              <div class="chart-bar-fill ${cls}" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+            })
+            .join('');
+    }
+
+    private exportCSV() {
+        if (this.transactions.length === 0) {
+            alert('Chưa có dữ liệu giao dịch để xuất file!');
+            return;
+        }
+
+        const headers = ['ID Giao Dich', 'Thoi Gian', 'Ten Don Hang', 'So Tien', 'Phuong Thuc Thanh Toan', 'Thang', 'Quy', 'Nam', 'Ghi Chu'];
+        const rows = this.transactions.map(t => [
+            t.id,
+            `"${t.date}"`,
+            `"${t.itemName.replace(/"/g, '""')}"`,
+            t.amount,
+            `"${t.paymentMethod}"`,
+            `"${t.month}"`,
+            `"${t.quarter}"`,
+            t.year,
+            `"${(t.notes || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `revenue_report_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     private formatCurrency(num: number): string {
@@ -424,5 +641,4 @@ class RevenueApp {
     }
 }
 
-// Initialize App
 new RevenueApp();

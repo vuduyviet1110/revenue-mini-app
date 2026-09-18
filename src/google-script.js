@@ -1,5 +1,5 @@
 /**
- * GOOGLE APPS SCRIPT - TỔNG HỢP DOANH THU TỰ ĐỘNG & TẢI DỮ LIỆU 2 CHIỀU
+ * GOOGLE APPS SCRIPT - TỔNG HỢP DOANH THU TỰ ĐỘNG & TẢI/SỬA/XÓA 2 CHIỀU
  * 
  * Hướng dẫn cài đặt / Cập nhật:
  * 1. Mở file Google Sheet của bạn -> Tiện ích mở rộng (Extensions) -> Apps Script
@@ -24,10 +24,74 @@ function doPost(e) {
             sheet.setRowHeight(1, 35);
         }
 
-        // Tạo ID giao dịch nếu chưa có
+        var action = data.action || 'create';
+
+        // 1. Xóa giao dịch theo ID
+        if (action === 'delete') {
+            var targetId = data.id;
+            var lastRow = sheet.getLastRow();
+            var deleted = false;
+
+            if (lastRow > 1) {
+                var ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+                for (var i = 0; i < ids.length; i++) {
+                    if (String(ids[i][0]) === String(targetId)) {
+                        sheet.deleteRow(i + 2); // +2 vì bỏ hàng 1 tiêu đề và index 0
+                        deleted = true;
+                        break;
+                    }
+                }
+            }
+
+            return ContentService
+                .createTextOutput(JSON.stringify({
+                    status: deleted ? 'success' : 'not_found',
+                    message: deleted ? 'Đã xóa hàng khỏi Google Sheet!' : 'Không tìm thấy ID trên Sheet'
+                }))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 2. Cập nhật (Edit) giao dịch theo ID
+        if (action === 'edit') {
+            var targetId = data.id;
+            var lastRow = sheet.getLastRow();
+            var updated = false;
+
+            if (lastRow > 1) {
+                var ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+                for (var i = 0; i < ids.length; i++) {
+                    if (String(ids[i][0]) === String(targetId)) {
+                        var rowIndex = i + 2;
+                        var updateRow = [
+                            targetId,
+                            data.date || new Date().toLocaleString('vi-VN'),
+                            data.itemName || 'Không tên',
+                            Number(data.amount) || 0,
+                            data.paymentMethod || 'Tiền mặt',
+                            data.month || '',
+                            data.quarter || '',
+                            data.year || new Date().getFullYear(),
+                            data.notes || ''
+                        ];
+                        sheet.getRange(rowIndex, 1, 1, updateRow.length).setValues([updateRow]);
+                        sheet.getRange(rowIndex, 4).setNumberFormat('#,##0 "VNĐ"');
+                        updated = true;
+                        break;
+                    }
+                }
+            }
+
+            return ContentService
+                .createTextOutput(JSON.stringify({
+                    status: updated ? 'success' : 'not_found',
+                    message: updated ? 'Đã cập nhật hàng trên Google Sheet!' : 'Không tìm thấy ID để sửa'
+                }))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 3. Tạo mới (Create - Mặc định)
         var transactionId = data.id || ('TX-' + Math.floor(Math.random() * 900000 + 100000));
 
-        // Dữ liệu hàng mới
         var newRow = [
             transactionId,
             data.date || new Date().toLocaleString('vi-VN'),
@@ -40,16 +104,11 @@ function doPost(e) {
             data.notes || ''
         ];
 
-        // Thêm hàng vào sheet
         sheet.appendRow(newRow);
-
         var lastRowIndex = sheet.getLastRow();
-
-        // Định dạng cột số tiền (Cột D - Cột 4) là tiền tệ VNĐ
         sheet.getRange(lastRowIndex, 4).setNumberFormat('#,##0 "VNĐ"');
         sheet.getRange(lastRowIndex, 1, 1, newRow.length).setVerticalAlignment('middle');
 
-        // Trả về JSON thành công
         return ContentService
             .createTextOutput(JSON.stringify({
                 status: 'success',
@@ -80,7 +139,6 @@ function doGet(e) {
                 .setMimeType(ContentService.MimeType.JSON);
         }
 
-        // Đọc toàn bộ dữ liệu (bỏ qua hàng tiêu đề row 1)
         var range = sheet.getRange(2, 1, lastRow - 1, 9);
         var values = range.getValues();
 
@@ -115,4 +173,5 @@ function doGet(e) {
             .setMimeType(ContentService.MimeType.JSON);
     }
 }
+
 
