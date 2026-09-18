@@ -758,6 +758,37 @@ body.dark-mode .history-item:hover {
     background: #0ea5e9;
 }
 
+/* Quick Amount Chips */
+.quick-amount-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.chip-btn {
+    background: rgba(197, 137, 102, 0.12);
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text);
+    padding: 3px 9px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.chip-btn:hover {
+    background: var(--color-terracotta);
+    color: #ffffff;
+}
+
+.optional-text {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-muted);
+}
+
 /* Skeleton Loading Animation */
 @keyframes skeleton-pulse {
     0% {

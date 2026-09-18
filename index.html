@@ -63,7 +63,8 @@
             <!-- Left Column: Form nhập liệu -->
             <section class="card form-card">
                 <div class="card-header">
-                    <h2 class="font-display" id="form-title"><span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới</h2>
+                    <h2 class="font-display" id="form-title"><span class="dot terracotta"></span> Ghi Nhận Doanh Thu Mới
+                    </h2>
                     <span class="status-indicator" id="sync-status">
                         <span class="status-dot online"></span> Sẵn sàng đồng bộ
                     </span>
@@ -73,10 +74,11 @@
                     <input type="hidden" id="edit-id" value="" />
 
                     <div class="form-group">
-                        <label for="item-name">Tên đơn hàng / Sản phẩm</label>
+                        <label for="item-name">Tên đơn hàng / Sản phẩm <span class="optional-text">(Không bắt
+                                buộc)</span></label>
                         <div class="input-wrapper">
-                            <input type="text" id="item-name" placeholder="Ví dụ: Áo Sơ Mi Nam Mid-Century Vintage #102"
-                                required />
+                            <input type="text" id="item-name"
+                                placeholder="Ví dụ: Đơn hàng #102 (Không nhập sẽ mặc định Đơn hàng)" />
                         </div>
                     </div>
 
@@ -87,17 +89,23 @@
                                 <input type="number" id="amount" placeholder="0" min="1000" step="1000" required />
                                 <span class="currency-symbol">đ</span>
                             </div>
+                            <!-- Quick Amount Chips -->
+                            <div class="quick-amount-chips" id="quick-amount-chips">
+                                <button type="button" class="chip-btn" data-val="99000">99k</button>
+                                <button type="button" class="chip-btn" data-val="149000">149k</button>
+                                <button type="button" class="chip-btn" data-val="199000">199k</button>
+                                <button type="button" class="chip-btn" data-val="299000">299k</button>
+                                <button type="button" class="chip-btn" data-val="499000">499k</button>
+                                <button type="button" class="chip-btn" data-val="999000">999k</button>
+                            </div>
                             <div class="amount-preview" id="amount-preview">0 đ</div>
                         </div>
 
                         <div class="form-group flex-1">
                             <label for="payment-method">Phương thức thanh toán</label>
                             <select id="payment-method">
-                                <option value="Chuyển khoản Banking">Chuyển khoản Banking</option>
+                                <option value="Chuyển khoản / Thẻ">Chuyển khoản / Thẻ</option>
                                 <option value="Tiền mặt">Tiền mặt</option>
-                                <option value="Thẻ tín dụng / ATM">Thẻ tín dụng / ATM</option>
-                                <option value="Ví MoMo / ZaloPay">Ví MoMo / ZaloPay</option>
-                                <option value="COD Thu Hộ">COD Thu Hộ</option>
                             </select>
                         </div>
                     </div>
@@ -125,13 +133,15 @@
 
                     <div class="form-actions">
                         <button type="submit" id="btn-submit" class="btn btn-primary btn-block">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"
+                                stroke-linejoin="miter">
                                 <path d="m5 12 5 5L20 7" />
                             </svg>
                             <span id="btn-submit-text">Ghi Nhận & Bắn Về Google Sheet</span>
                         </button>
-                        <button type="button" id="btn-cancel-edit" class="btn btn-outline btn-block" style="display: none; margin-top: 0.5rem;">
+                        <button type="button" id="btn-cancel-edit" class="btn btn-outline btn-block"
+                            style="display: none; margin-top: 0.5rem;">
                             Hủy Chỉnh Sửa
                         </button>
                     </div>
@@ -181,14 +191,12 @@
 
                     <!-- Search & Filter Controls -->
                     <div class="filter-bar">
-                        <input type="text" id="search-input" placeholder="🔍 Tìm theo tên, ghi chú..." class="filter-search" />
+                        <input type="text" id="search-input" placeholder="🔍 Tìm theo tên, ghi chú..."
+                            class="filter-search" />
                         <select id="filter-payment" class="filter-select">
                             <option value="ALL">Tất cả PT thanh toán</option>
-                            <option value="Chuyển khoản Banking">Chuyển khoản Banking</option>
+                            <option value="Chuyển khoản / Thẻ">Chuyển khoản / Thẻ</option>
                             <option value="Tiền mặt">Tiền mặt</option>
-                            <option value="Thẻ tín dụng / ATM">Thẻ tín dụng / ATM</option>
-                            <option value="Ví MoMo / ZaloPay">Ví MoMo / ZaloPay</option>
-                            <option value="COD Thu Hộ">COD Thu Hộ</option>
                         </select>
                     </div>
 
@@ -215,7 +223,8 @@
         <!-- Chart Section -->
         <section class="card chart-section" style="margin-top: 2rem;">
             <div class="card-header">
-                <h2 class="font-display"><span class="dot mustard"></span> Phân Tích Doanh Thu Theo Phương Thức Thanh Toán</h2>
+                <h2 class="font-display"><span class="dot mustard"></span> Phân Tích Doanh Thu Theo Phương Thức Thanh
+                    Toán</h2>
             </div>
             <div class="chart-container" id="chart-container">
                 <!-- Bar Breakdown -->

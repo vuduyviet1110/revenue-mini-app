@@ -260,6 +260,17 @@ class RevenueApp {
         document.getElementById('btn-sync-all')?.addEventListener('click', () => {
             this.syncPendingTransactions();
         });
+
+        // Quick Amount Chips Event Listeners
+        document.querySelectorAll('.chip-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const val = (e.currentTarget as HTMLElement).dataset.val;
+                if (val) {
+                    this.amountInput.value = val;
+                    this.amountPreview.textContent = this.formatCurrency(Number(val));
+                }
+            });
+        });
     }
 
     private getDateInfo(dateObj: Date) {
@@ -307,14 +318,15 @@ class RevenueApp {
     }
 
     private async handleSubmit() {
-        const itemName = this.itemNameInput.value.trim();
+        const rawItemName = this.itemNameInput.value.trim();
+        const itemName = rawItemName || 'Đơn hàng';
         const amount = Number(this.amountInput.value) || 0;
         const paymentMethod = this.paymentMethodSelect.value;
         const dateVal = this.saleDateInput.value;
         const notes = this.notesInput.value.trim();
 
-        if (!itemName || amount <= 0 || !dateVal) {
-            alert('Vui lòng điền đầy đủ tên sản phẩm và số tiền hợp lệ!');
+        if (amount <= 0 || !dateVal) {
+            alert('Vui lòng nhập số tiền hợp lệ!');
             return;
         }
 
@@ -575,19 +587,17 @@ class RevenueApp {
 
     private renderChart() {
         const methodTotals: { [key: string]: number } = {
-            'Chuyển khoản Banking': 0,
-            'Tiền mặt': 0,
-            'Thẻ tín dụng / ATM': 0,
-            'Ví MoMo / ZaloPay': 0,
-            'COD Thu Hộ': 0
+            'Chuyển khoản / Thẻ': 0,
+            'Tiền mặt': 0
         };
 
         let grandTotal = 0;
         for (const t of this.transactions) {
-            if (methodTotals[t.paymentMethod] !== undefined) {
-                methodTotals[t.paymentMethod] += t.amount;
+            const key = t.paymentMethod.includes('Tiền mặt') ? 'Tiền mặt' : 'Chuyển khoản / Thẻ';
+            if (methodTotals[key] !== undefined) {
+                methodTotals[key] += t.amount;
             } else {
-                methodTotals[t.paymentMethod] = t.amount;
+                methodTotals[key] = t.amount;
             }
             grandTotal += t.amount;
         }
@@ -598,11 +608,8 @@ class RevenueApp {
         }
 
         const classMap: { [key: string]: string } = {
-            'Chuyển khoản Banking': 'banking',
-            'Tiền mặt': 'cash',
-            'Thẻ tín dụng / ATM': 'card',
-            'Ví MoMo / ZaloPay': 'momo',
-            'COD Thu Hộ': 'cod'
+            'Chuyển khoản / Thẻ': 'banking',
+            'Tiền mặt': 'cash'
         };
 
         this.chartBarsEl.innerHTML = Object.keys(methodTotals)
